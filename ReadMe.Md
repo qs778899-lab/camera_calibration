@@ -3,9 +3,9 @@
 
 ## 环境配置:
 
-sudo apt-get install ros-$ROS_DISTRO-realsense2-camera
+    sudo apt-get install ros-$ROS_DISTRO-realsense2-camera
 
-sudo apt-get install ros-noetic-realsense2-camera
+    sudo apt-get install ros-noetic-realsense2-camera
 
 
 
@@ -34,11 +34,21 @@ sudo apt-get install ros-noetic-realsense2-camera
 
         启动camera3
         roslaunch realsense2_camera rs_camera.launch \
-            camera:=camera1 \
+            camera:=camera3 \
             serial_no:=250122078799 \
             enable_color:=true \
             enable_depth:=true
 
 
         查看camera1的节点是否成功发布，比如查看彩色图像的发布频率
-        rostopic hz /camera1/color/image_ra
+        rostopic hz /camera1/color/image_raw
+
+        查看camera3的节点是否成功发布，比如查看彩色图像的发布频率
+        rostopic hz /camera3/color/image_raw
+
+        note：
+        不需要roscore, roslaunch 自动启动
+
+2. 启动
+
+        python show_image.py --camera1 camera1 --camera2 camera3
