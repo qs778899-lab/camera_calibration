@@ -21,12 +21,14 @@ sudo apt-get install ros-noetic-realsense2-camera
 
 1. 连接相机
 
-rs-enumerate-devices: 查看usb连接的 RealSense 相机
+    rs-enumerate-devices: 查看usb连接的 RealSense 相机
 
 
-roslaunch realsense2_camera rs_camera.launch \
-    camera:=camera1 \
-    serial_no:=231522072272
+    roslaunch realsense2_camera rs_camera.launch \
+        camera:=camera1 \
+        serial_no:=231522072272 \
+        enable_color:=true \
+        enable_depth:=true
 
-# 查看 camera1 的话题
-rostopic list | grep camera1
+
+    rostopic hz /camera1/color/image_ra: 查看camera1的节点是否成功发布，比如查看彩色图像的发布频率
