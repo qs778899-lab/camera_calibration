@@ -17,18 +17,28 @@ sudo apt-get install ros-noetic-realsense2-camera
 ## 标定操作流程:
 
 0. 放置 ArUco 标记 
-如(ID=0, 尺寸0.1m)，确保两个相机都能看到标记
+
+        如(ID=0, 尺寸0.1m)，确保两个相机都能看到标记
 
 1. 连接相机
 
-    rs-enumerate-devices: 查看usb连接的 RealSense 相机
+        查看usb连接的 RealSense 相机
+        rs-enumerate-devices
+
+        启动camera1
+        roslaunch realsense2_camera rs_camera.launch \
+            camera:=camera1 \
+            serial_no:=231522072272 \
+            enable_color:=true \
+            enable_depth:=true
+
+        启动camera3
+        roslaunch realsense2_camera rs_camera.launch \
+            camera:=camera1 \
+            serial_no:=250122078799 \
+            enable_color:=true \
+            enable_depth:=true
 
 
-    roslaunch realsense2_camera rs_camera.launch \
-        camera:=camera1 \
-        serial_no:=231522072272 \
-        enable_color:=true \
-        enable_depth:=true
-
-
-    rostopic hz /camera1/color/image_ra: 查看camera1的节点是否成功发布，比如查看彩色图像的发布频率
+        查看camera1的节点是否成功发布，比如查看彩色图像的发布频率
+        rostopic hz /camera1/color/image_ra
