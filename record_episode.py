@@ -118,7 +118,7 @@ class RealEnv:
                                    ....}
     """
 
-    def __init__(self, robot_names, camera_names=['camera1']):
+    def __init__(self, robot_names, camera_names=['camera1'], enable_robot=True):
         try:
             rospy.init_node('ik_step', anonymous=True)
         except:
@@ -126,33 +126,48 @@ class RealEnv:
         self.robot_names = robot_names
         self.robots = {}
         self.robot_infos = {}
-        for i, name in enumerate(robot_names):
-            self.robots[name] = init_robot(name)
-            self.robot_infos[name] = Recorder(name, init_node=False)
+        self._robots_enabled = enable_robot
+        if enable_robot:
+            for i, name in enumerate(robot_names):
+                self.robots[name] = init_robot(name)
+                self.robot_infos[name] = Recorder(name, init_node=False)
+        else:
+            for name in robot_names:
+                self.robots[name] = None
+                self.robot_infos[name] = None
         self.image_recorder = ImageRecorder(init_node=False, camera_names=camera_names)
 
         time.sleep(2)
 
-    def get_qpos(self, robot_names):
+    def get_qpos(self, robot_names): #? 逻辑
         qpos = []
         for robot_name in robot_names:
-            robot_qpos_raw = self.robot_infos[robot_name].qpos
-            qpos.append(robot_qpos_raw)
+            recorder = self.robot_infos.get(robot_name)
+            if recorder is None or recorder.qpos is None:
+                continue
+            qpos.append(recorder.qpos)
 
+        if not qpos:
+            print("qpos is empty!")
+            return np.array([])
         return np.concatenate(qpos)
 
-    def get_data(self, robot_names):
+    def get_data(self, robot_names): #? 逻辑
         data = []
         for robot_name in robot_names:
-            data.append(self.robot_infos[robot_name].data)
+            recorder = self.robot_infos.get(robot_name)
+            if recorder is None or recorder.data is None:
+                continue
+            data.append(recorder.data)
         return data
 
     def get_images(self):
         return self.image_recorder.get_images()
 
-    def get_observation(self):
+    def get_observation(self): #? 逻辑
         obs = collections.OrderedDict()
-        obs['qpos'] = self.get_qpos(self.robot_names)
+        qpos = self.get_qpos(self.robot_names)
+        obs['qpos'] = qpos if qpos.size != 0 else None
         obs['images'] = self.get_images()
         return obs
 

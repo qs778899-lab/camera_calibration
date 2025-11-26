@@ -249,7 +249,7 @@ def auto_regist_camera(marker_id_input):
 
     def setup_camera_env(camera_name):
         """Create environment and position map for a single camera."""
-        env = RealEnv(robot_names=['robot1'], camera_names=[camera_name])
+        env = RealEnv(robot_names=['robot1'], camera_names=[camera_name], enable_robot=False)
         position_map = PositionMap([marker_id_input], 1)
         return env, position_map
 

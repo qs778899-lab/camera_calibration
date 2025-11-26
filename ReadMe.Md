@@ -11,6 +11,8 @@
 
     pip install ipython h5py message_filters
 
+    /bin/python3 -m pip install dm-env opencv-contrib-python spatialmath-python rospkg catkin_pkg numpy h5py ipython message_filters
+
 
 
 ## 关键参数设置:
@@ -56,3 +58,5 @@
 2. 测试是否能正常接收图像
 
         python show_image.py --camera1 camera1 --camera2 camera3
+
+        /bin/python3   show_image.py --camera1 camera1 --camera2 camera3
