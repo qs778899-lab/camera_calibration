@@ -63,9 +63,24 @@
 
 3. 运行主程序进行标定计算
 
-        python show_image.py --camera1 camera1 --camera2 camera3
+        python show_image.py --camera1 camera1 --camera2 camera3 (暂时不用)
 
-        /bin/python3   show_image.py --camera1 camera1 --camera2 camera3
+        /bin/python3   show_image.py --camera1 camera1 --camera2 camera3  (暂时不用)
 
         /bin/python3  marker_tracker.py 
+
+4. 标定结果记录:
+
+        -0.08477   0.6161   -0.7831    0.7618    
+        0.9132   -0.2663   -0.3084   -0.4537    
+        -0.3985   -0.7413   -0.54      0.4132    
+        0         0         0         1  
+
+
+## 示例效果
+
+![Demo Result](./demo_results/demo1.jpg)
+
+
+
 

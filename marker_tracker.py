@@ -325,7 +325,7 @@ def auto_regist_camera(marker_id_input):
     # 新res: T_base_cam3
 
     print("T_base_camera3", res)
-        #     camera1 to camera3   -0.08477   0.6161   -0.7831    0.7618    
+        #   -0.08477   0.6161   -0.7831    0.7618    
         #    0.9132   -0.2663   -0.3084   -0.4537    
         #   -0.3985   -0.7413   -0.54      0.4132    
         #    0         0         0         1    
