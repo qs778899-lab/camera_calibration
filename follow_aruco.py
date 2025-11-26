@@ -14,9 +14,9 @@ from my_utils.robot_utils import robot_move,robot_fk,robot_ee2marker
 from my_utils.myRobotSaver import MyRobotSaver,read_movement,replay_movement
 
 
-sys.path.append('/home/hanglok/work/ur_slam')
-from ik_step import init_robot 
-import ros_utils.myGripper
+sys.path.append('/home/erlin/work/labgrasp')
+from record_episode import init_robot  # 使用统一的 init_robot 函数
+# import ros_utils.myGripper  # 注释掉，使用 Dobot gripper
 
 
 
@@ -215,18 +215,28 @@ class MarkerAction:
 if __name__ == "__main__":
     try:
         # rospy.init_node('dino_bot')
-        gripper = ros_utils.myGripper.MyGripper()
         robot = init_robot("robot1")
+        
+        # 尝试初始化 Dobot gripper
+        try:
+            sys.path.append('/home/erlin/work/labgrasp')
+            from dobot_gripper import DobotGripper
+            gripper = DobotGripper(robot.dobot)
+            gripper.connect(init=True)
+        except Exception as e:
+            print(f"Warning: Could not initialize gripper: {e}")
+            gripper = None
+            
         tracker = MarkerTracker()
         tracker.start_tracking(show_images=True)
         time.sleep(3)
-        Action = MarkerAction(robot, gripper,tracker)
+        Action = MarkerAction(robot, gripper, tracker)
         while True:
             key1 = input("Enter command: ")
             marker_pose = tracker.get_marker_position(Action.maker_id)
 
-            Action.run(key1,marker_pose)
-            print("key1",key1)
+            Action.run(key1, marker_pose)
+            print("key1", key1)
     except KeyboardInterrupt:
         tracker.stop()
     

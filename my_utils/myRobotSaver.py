@@ -9,8 +9,8 @@ import termios
 import tty
 
 from my_utils.pose_util import *
-sys.path.append("/home/hanglok/work/ur_slam")
-from ik_step import init_robot
+sys.path.append("/home/erlin/work/cameras")
+from record_episode import init_robot  # 使用统一的 init_robot 函数
 
 
 class MyRobotSaver:

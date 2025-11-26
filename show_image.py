@@ -16,8 +16,7 @@ from my_utils.robot_utils import robot_move,robot_fk,robot_ee2marker
 from my_utils.myRobotSaver import MyRobotSaver,read_movement,replay_movement
 from follow_aruco import *
 from marker_tracker import *
-
-
+from record_episode import init_robot  # 导入统一的 init_robot 函数
 
 
 
@@ -30,9 +29,21 @@ if __name__ == "__main__":
     parser.add_argument('--robot', type=str, default="robot1", help='Robot name')
     args = parser.parse_args()
 
-    rospy.init_node('dino_bot')
-    gripper = ros_utils.myGripper.MyGripper()
+    # ROS 节点已在 record_episode 导入时初始化，不需要重复初始化
+    
+    # 初始化机器人和夹爪
     robot = init_robot(args.robot)
+    
+    # 尝试初始化 Dobot gripper
+    # try:
+    #     sys.path.append('/home/erlin/work/labgrasp')
+    #     from dobot_gripper import DobotGripper
+    #     gripper = DobotGripper(robot.dobot)
+    #     gripper.connect(init=True)
+    # except Exception as e:
+    #     print(f"Warning: Could not initialize gripper: {e}")
+    #     gripper = None
+    
     tracker = MarkerTracker(camera_names=[args.camera1, args.camera2])
     tracker.start_tracking(show_images=True)
     time.sleep(3)

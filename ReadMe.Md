@@ -7,6 +7,10 @@
 
     sudo apt-get install ros-noetic-realsense2-camera
 
+    pip install dm-env opencv-contrib-python spatialmath-python rospkg catkin_pkg numpy h5py
+
+    pip install ipython h5py message_filters
+
 
 
 ## 关键参数设置:
@@ -49,6 +53,6 @@
         note：
         不需要roscore, roslaunch 自动启动
 
-2. 启动
+2. 测试是否能正常接收图像
 
         python show_image.py --camera1 camera1 --camera2 camera3
