@@ -256,7 +256,10 @@ def auto_regist_camera(marker_id_input):
     def get_marker_detection(env, camera_name, marker_info):
         """Get marker pose from camera image."""
         obs = env.get_observation()
-        img = obs['images'][camera_name].copy()
+        img = obs['images'].get(camera_name)
+        if img is None:
+            return None, None
+        img = img.copy()
         return get_marker_pose(
             img,
             marker_size=marker_info[marker_id_input]["marker_size"],
@@ -286,7 +289,10 @@ def auto_regist_camera(marker_id_input):
     camera3_pose = position_map2.position_map[marker_id_input]
     
     res = camera1_pose * camera3_pose.inv()  # Camera-to-camera transformation
-    robot_pose = env2.robots['robot1'].get_pose_se3()
+    robot_ref = env2.robots.get('robot1') or RealEnv._shared_robots.get('robot1')
+    if robot_ref is None:
+        raise RuntimeError("Unable to obtain shared robot instance for camera calibration.")
+    robot_pose = robot_ref.get_pose_se3()
     res = robot_pose * transformations * res
 
     print("camera1 to camera3", res)

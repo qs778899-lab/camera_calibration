@@ -121,6 +121,9 @@ class RealEnv:
                                    ....}
     """
 
+    _shared_robots = {}
+    _shared_recorders = {}
+
     def __init__(self, robot_names, camera_names=['camera1'], enable_robot=True):
         try:
             rospy.init_node('ik_step', anonymous=True)
@@ -132,12 +135,16 @@ class RealEnv:
         self._robots_enabled = enable_robot
         if enable_robot:
             for i, name in enumerate(robot_names):
-                self.robots[name] = init_robot(name)
-                self.robot_infos[name] = Recorder(name, init_node=False)
+                robot = init_robot(name)
+                recorder = Recorder(name, init_node=False)
+                self.robots[name] = robot
+                self.robot_infos[name] = recorder
+                RealEnv._shared_robots[name] = robot
+                RealEnv._shared_recorders[name] = recorder
         else:
             for name in robot_names:
-                self.robots[name] = None
-                self.robot_infos[name] = None
+                self.robots[name] = RealEnv._shared_robots.get(name)
+                self.robot_infos[name] = RealEnv._shared_recorders.get(name)
         self.image_recorder = ImageRecorder(init_node=False, camera_names=camera_names)
 
         time.sleep(2)
@@ -151,7 +158,7 @@ class RealEnv:
             qpos.append(recorder.qpos)
 
         if not qpos:
-            print("qpos is empty!")
+            # print("qpos is empty!")
             return np.array([])
         return np.concatenate(qpos)
 
