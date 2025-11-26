@@ -28,9 +28,11 @@ class DummyRobot:
         self.dobot = None
 
     def get_pose_se3(self):
+        print("fake pose in DummyRobot")
         return SE3()
 
     def get_joint_positions(self):
+        print("fake joint positions in DummyRobot")
         return [0.0] * 6
 
 
@@ -51,6 +53,7 @@ class DobotRobotWrapper:
                 # 力传感器置零
                 self.dobot.six_force_home()
                 time.sleep(1)
+                print("dobot 连接成功")
                 break
             except Exception as e:
                 print(f"连接失败，第 {attempt + 1} 次重试: {e}")
@@ -88,7 +91,7 @@ def init_robot(name, use_dummy_if_fail=True):
     }
     config = robot_configs.get(name, robot_configs['robot1'])
 
-    if name in _ROBOT_CACHE and _ROBOT_CACHE[name] is not None:
+    if name in _ROBOT_CACHE and _ROBOT_CACHE[name] is not None: #避免重复初始化dobot
         return _ROBOT_CACHE[name]
 
     if use_dummy_if_fail:
