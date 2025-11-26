@@ -229,7 +229,7 @@ class MarkerTracker:
             return self.position_map.overall_map.copy()
 
 
-#! 已知camera1(eye-in-hand)的手眼标定矩阵
+#! 已知camera1(eye-in-hand)的手眼标定矩阵: 从末端执行器ee到相机cam , T_ee_cam 
 transformations = SE3([
     [0.99994846, -0.00489269, -0.00889571, -0.03275156],
     [0.00641473,  0.98363436,  0.18006193, -0.06321087],
@@ -290,7 +290,10 @@ def auto_regist_camera(marker_id_input):
     camera1_pose = position_map1.position_map[marker_id_input]
     camera3_pose = position_map2.position_map[marker_id_input]
     
+    # camera1_pose: T_cam1_marker
+    # camera3_pose.inv(): T_marker_cam3 
     res = camera1_pose * camera3_pose.inv()  # Camera-to-camera transformation
+    #res: T_cam1_cam3
     robot_ref = env2.robots.get('robot1') or RealEnv._shared_robots.get('robot1')
     if robot_ref is None:
         raise RuntimeError("Unable to obtain shared robot instance for camera calibration.")
@@ -315,9 +318,13 @@ def auto_regist_camera(marker_id_input):
             f"{raw_pose[0]:.4f}, {raw_pose[1]:.4f}, {raw_pose[2]:.4f}, "
             f"{raw_pose[3]:.4f}, {raw_pose[4]:.4f}, {raw_pose[5]:.4f}"
         )
+    # robot_pose: T_base_ee
+    # transformations: T_ee_cam1
+    # res: T_cam1_cam3
     res = robot_pose * transformations * res
+    # 新res: T_base_cam3
 
-    print("camera1 to camera3", res)
+    print("T_base_camera3", res)
         #     camera1 to camera3   -0.08477   0.6161   -0.7831    0.7618    
         #    0.9132   -0.2663   -0.3084   -0.4537    
         #   -0.3985   -0.7413   -0.54      0.4132    

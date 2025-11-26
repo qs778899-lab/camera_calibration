@@ -55,7 +55,13 @@
         note：
         不需要roscore, roslaunch 自动启动
 
-2. 测试是否能正常接收图像
+2. 测试dobot连接是否正正常
+
+        
+        /bin/python3  test_dobot.py
+
+
+3. 运行主程序进行标定计算
 
         python show_image.py --camera1 camera1 --camera2 camera3
 
@@ -63,4 +69,3 @@
 
         /bin/python3  marker_tracker.py 
 
-        /bin/python3  test_dobot.py
