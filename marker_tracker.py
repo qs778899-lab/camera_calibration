@@ -115,17 +115,17 @@ class MarkerTracker:
         camera1: eye-in-hand camera
         camera3: fixed camera        
         '''
-        with open(marker_json_path, 'r') as f:
+        with open(marker_json_path, 'r') as f: #读取含有所有markers的信息文件
             self.marker_info = json.load(f)
         self.env = RealEnv(robot_names=['robot1'], camera_names=camera_names)
         
-        self.id_list = list(self.marker_info.keys())
+        self.id_list = list(self.marker_info.keys()) #可能有多个markers可以追踪
         self.position_map = PositionMap(self.id_list, len(camera_names))
 
         self.corner = {str(camera_name): {str(id): None for id in self.id_list} for camera_name in camera_names}
 
-        print("Calibrating cameras...")
-        self.res_se3 = auto_regist_camera(0)
+        print("begin calibrating cameras...")
+        self.res_se3 = auto_regist_camera(0) #将marker_id=0传入，只追踪这个
         
         # Thread communication
         self.running = True
@@ -194,7 +194,7 @@ class MarkerTracker:
             img = self.get_image(camera_name)
         if img is not None:
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            # draw corner line
+            # draw corner line，在检测到marker时才可能会运行
             if goal_corner is not None and marker_id in self.corner[camera_name]:
                 for (x1, y1), (x2, y2) in zip(self.corner[camera_name][marker_id], goal_corner):
                    cv2.line(img, (int(x1), int(y1)), (int(x2), int(y2)), (255,255,0), 2)
@@ -283,8 +283,8 @@ def auto_regist_camera(marker_id_input):
             (env2, "camera3", position_map2)
         ]:
             marker_pose, _ = get_marker_detection(env, camera_name, marker_info) #这里面会调用get qpos
-            position_map.update_position(marker_id_input, marker_pose)
-            position_map.combine_temp_map(marker_id_input)
+            position_map.update_position(marker_id_input, marker_pose) #用卡尔曼滤波更新实际marker的position
+            position_map.combine_temp_map(marker_id_input)   #它确保每一轮都在收齐所有相机的观测之后，才更新“当前标记姿态”。这样既能兼顾多相机的数据，又避免用单个相机的残缺结果覆盖掉其他信息。
 
     # Calculate transformation
     camera1_pose = position_map1.position_map[marker_id_input]
@@ -294,10 +294,34 @@ def auto_regist_camera(marker_id_input):
     robot_ref = env2.robots.get('robot1') or RealEnv._shared_robots.get('robot1')
     if robot_ref is None:
         raise RuntimeError("Unable to obtain shared robot instance for camera calibration.")
-    robot_pose = robot_ref.get_pose_se3()
+    
+    robot_pose = robot_ref.get_pose_se3() #函数定义在record_episode.py中, 里面会调用dobot.get_pose()
+    translation = robot_pose.t            # [x, y, z]，单位米
+    rpy_rad = robot_pose.rpy(order='xyz') # [rx, ry, rz]，单位弧度
+    rpy_deg = np.degrees(rpy_rad)
+    print(
+        "robot pose: "
+        f"x={translation[0]:.4f} m, "
+        f"y={translation[1]:.4f} m, "
+        f"z={translation[2]:.4f} m, "
+        f"rx={rpy_deg[0]:.3f}°, "
+        f"ry={rpy_deg[1]:.3f}°, "
+        f"rz={rpy_deg[2]:.3f}°"
+    )
+    if hasattr(robot_ref, "dobot"):
+        raw_pose = robot_ref.dobot.get_pose()
+        print(
+            "robot pose raw (x,y,z,rx,ry,rz): "
+            f"{raw_pose[0]:.4f}, {raw_pose[1]:.4f}, {raw_pose[2]:.4f}, "
+            f"{raw_pose[3]:.4f}, {raw_pose[4]:.4f}, {raw_pose[5]:.4f}"
+        )
     res = robot_pose * transformations * res
 
     print("camera1 to camera3", res)
+        #     camera1 to camera3   -0.08477   0.6161   -0.7831    0.7618    
+        #    0.9132   -0.2663   -0.3084   -0.4537    
+        #   -0.3985   -0.7413   -0.54      0.4132    
+        #    0         0         0         1    
     return res
 
 
@@ -312,8 +336,8 @@ def main():
     try:
         while True:
             # 显示所有相机图像
-            key1 = tracker.show_image("camera1", marker_id=0)  #? 现在打印的是marker_id=0的图像吗？
-            key3 = tracker.show_image("camera3", marker_id=0)
+            key1 = tracker.show_image("camera1", marker_id=0)  #追踪marker_id=0的图像，显示camera1的追踪结果
+            key3 = tracker.show_image("camera3", marker_id=0)  #追踪marker_id=0的图像，显示camera3的追踪结果
             
             # 检查退出条件
             if key1 == ord('q'):

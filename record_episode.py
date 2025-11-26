@@ -139,8 +139,8 @@ class RealEnv:
         self._robots_enabled = enable_robot
         if enable_robot:
             for i, name in enumerate(robot_names):
-                robot = init_robot(name)
-                recorder = Recorder(name, init_node=False)
+                robot = init_robot(name) #dobot初始化包括api连接后的实例
+                recorder = Recorder(name, init_node=False) #记录qpos等dobot的state信息，标定无需使用？
                 self.robots[name] = robot
                 self.robot_infos[name] = recorder
                 RealEnv._shared_robots[name] = robot

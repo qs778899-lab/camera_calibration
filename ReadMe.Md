@@ -62,3 +62,5 @@
         /bin/python3   show_image.py --camera1 camera1 --camera2 camera3
 
         /bin/python3  marker_tracker.py 
+
+        /bin/python3  test_dobot.py
