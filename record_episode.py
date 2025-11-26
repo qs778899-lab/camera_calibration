@@ -35,6 +35,10 @@ class DummyRobot:
         print("fake joint positions in DummyRobot")
         return [0.0] * 6
 
+    def get_joints(self):
+        print("fake joints in DummyRobot")
+        return [0.0] * 6
+
 
 class DobotRobotWrapper:
     """Wrapper class providing the interface expected by the rest of the code."""

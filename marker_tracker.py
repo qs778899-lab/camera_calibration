@@ -228,12 +228,14 @@ class MarkerTracker:
         with self.lock:
             return self.position_map.overall_map.copy()
 
+
+#! 已知camera1(eye-in-hand)的手眼标定矩阵
 transformations = SE3([
-        [0.03391, -0.01653, 0.9993, 0.03622],
-        [0.9994, -0.0091, -0.03407, -0.02485], 
-        [0.009689, 0.9998, 0.01621, -0.1034],
-        [0, 0, 0, 1]
-    ])  # Eye-hand calibration matrix
+    [0.99994846, -0.00489269, -0.00889571, -0.03275156],
+    [0.00641473,  0.98363436,  0.18006193, -0.06321087],
+    [0.00786914, -0.18010971,  0.98361505,  0.07478308],
+    [0.0,         0.0,         0.0,          1.0       ]
+    ]) # Eye-hand calibration matrix
 
 def auto_regist_camera(marker_id_input):
     '''
@@ -310,9 +312,8 @@ def main():
     try:
         while True:
             # 显示所有相机图像
-            key1 = tracker.show_image("camera1")
-            
-            key3 = tracker.show_image("camera3")
+            key1 = tracker.show_image("camera1", marker_id=0)  #? 现在打印的是marker_id=0的图像吗？
+            key3 = tracker.show_image("camera3", marker_id=0)
             
             # 检查退出条件
             if key1 == ord('q'):

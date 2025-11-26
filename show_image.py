@@ -33,8 +33,9 @@ if __name__ == "__main__":
     
     # 初始化机器人和夹爪
     robot = init_robot(args.robot)
-    
+
     # 尝试初始化 Dobot gripper
+    gripper = None
     # try:
     #     sys.path.append('/home/erlin/work/labgrasp')
     #     from dobot_gripper import DobotGripper
