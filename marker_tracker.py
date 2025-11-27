@@ -367,7 +367,16 @@ def auto_regist_camera(marker_id_input):
         res = robot_pose * transformations * res
         # 新res: T_base_cam3
 
-        print("T_base_camera3", res)
+        translation_res = res.t
+        rpy_res = res.rpy(order='xyz')
+        print(
+            "T_base_camera3 (matrix):\n", res,
+            "\nT_base_camera3 (x,y,z,rx,ry,rz): "
+            f"x={translation_res[0]:.4f}, y={translation_res[1]:.4f}, z={translation_res[2]:.4f}, "
+            f"rx={rpy_res[0]:.4f}, ry={rpy_res[1]:.4f}, rz={rpy_res[2]:.4f}"
+        )
+
+        
 
         return res
 
