@@ -164,7 +164,8 @@ class MarkerTracker:
                         img_copy, 
                         marker_size=self.marker_info[marker_id]["marker_size"],
                         id=marker_id, 
-                        aruco_dict=set_aruco_dict(self.marker_info[marker_id]["aruco_dict"])
+                        aruco_dict=set_aruco_dict(self.marker_info[marker_id]["aruco_dict"]),
+                        intrinsics_name="intrinsics_1" if cam_name == "camera1" else "intrinsics_3"
                     )
                     # convert to robot base frame
                     if cam_name == "camera3" and marker_pose is not None: #
@@ -269,7 +270,8 @@ def auto_regist_camera(marker_id_input):
             img,
             marker_size=marker_info[marker_id_input]["marker_size"],
             id=marker_id_input,
-            aruco_dict=set_aruco_dict(marker_info[marker_id_input]["aruco_dict"])
+            aruco_dict=set_aruco_dict(marker_info[marker_id_input]["aruco_dict"]),
+            intrinsics_name="intrinsics_1" if camera_name == "camera1" else "intrinsics_3"
         )
 
     # Setup environments and load marker info
@@ -279,9 +281,9 @@ def auto_regist_camera(marker_id_input):
     env1, position_map1 = setup_camera_env("camera1")
     env2, position_map2 = setup_camera_env("camera3")
 
-    os.makedirs("records", exist_ok=True)
+    os.makedirs("record_tests", exist_ok=True)
     csv_filename = datetime.now().strftime("%Y%m%d_%H%M%S_camera_pose.csv")
-    csv_path = os.path.join("records", csv_filename)
+    csv_path = os.path.join("record_tests", csv_filename)
 
     def pose_to_str(pose):
         if pose is None:
@@ -303,7 +305,10 @@ def auto_regist_camera(marker_id_input):
         camera_order = ["camera1", "camera3"]
 
         # Collect and filter marker poses
+        iteration = 0
+        # while True:
         for iteration in range(1000):
+            # iteration += 1
             cam_results = {}
             for env, camera_name, position_map in [
                 (env1, "camera1", position_map1),
@@ -320,66 +325,51 @@ def auto_regist_camera(marker_id_input):
                 pose_to_str(cam_results.get("camera3")),
             ])
 
-    # Calculate transformation
-    camera1_pose = position_map1.position_map[marker_id_input]
-    camera3_pose = position_map2.position_map[marker_id_input]
-    
-    # camera1_pose: T_cam1_marker
-    # camera3_pose.inv(): T_marker_cam3 
-    res = camera1_pose * camera3_pose.inv()  # Camera-to-camera transformation
-    #res: T_cam1_cam3
-    robot_ref = env2.robots.get('robot1') or RealEnv._shared_robots.get('robot1')
-    if robot_ref is None:
-        raise RuntimeError("Unable to obtain shared robot instance for camera calibration.")
-    
-    robot_pose = robot_ref.get_pose_se3() #函数定义在record_episode.py中, 里面会调用dobot.get_pose()
-    print("robot_pose: ", robot_pose)
-    #  -0.08182  -0.9276    0.3644    0.4868    
-    # -0.9966    0.07219  -0.03998  -0.3219    
-    # 0.01078  -0.3664   -0.9304    0.393     
-    # 0         0         0         1     
-     
-    # translation = robot_pose.t            # [x, y, z]，单位米
-    # rpy_rad = robot_pose.rpy(order='xyz') # [rx, ry, rz]，单位弧度
-    # rpy_deg = np.degrees(rpy_rad)
-    # print(
-    #     "robot pose: "
-    #     f"x={translation[0]:.4f} m, "
-    #     f"y={translation[1]:.4f} m, "
-    #     f"z={translation[2]:.4f} m, "
-    #     f"rx={rpy_deg[0]:.3f}°, "
-    #     f"ry={rpy_deg[1]:.3f}°, "
-    #     f"rz={rpy_deg[2]:.3f}°"
-    # )
-    if hasattr(robot_ref, "dobot"):
-        raw_pose = robot_ref.dobot.get_pose()
-        print(
-            "robot pose raw (x,y,z,rx,ry,rz): "
-            f"{raw_pose[0]:.4f}, {raw_pose[1]:.4f}, {raw_pose[2]:.4f}, "
-            f"{raw_pose[3]:.4f}, {raw_pose[4]:.4f}, {raw_pose[5]:.4f}"
-        )
-        rotation_list = [raw_pose[3],raw_pose[4], raw_pose[5]]
-        R_xyz = R.from_euler('xyz', rotation_list, degrees=True)
-        raw_pose_matrix = SE3.Rt(
-            SO3(R_xyz.as_matrix()),
-            [raw_pose[0]/1000, raw_pose[1]/1000, raw_pose[2]/1000], 
-            check=False
-        )
-        raw_pose_matrix_array = np.array(raw_pose_matrix)
-        print("raw_pose_matrix_array", raw_pose_matrix_array)
-        # [[-0.08181547 -0.92764103  0.36440136  0.4867529 ]
-        # [-0.99658917  0.07219061 -0.03998184 -0.3218998 ]
-        # [ 0.01078244 -0.36642958 -0.93038331  0.3930265 ]
-        # [ 0.          0.          0.          1.        ]]
+        # Calculate transformation
+        camera1_pose = position_map1.position_map[marker_id_input]
+        camera3_pose = position_map2.position_map[marker_id_input]
+        
+        # camera1_pose: T_cam1_marker
+        # camera3_pose.inv(): T_marker_cam3 
 
-    # robot_pose: T_base_ee
-    # transformations: T_ee_cam1
-    # res: T_cam1_cam3
-    res = robot_pose * transformations * res
-    # 新res: T_base_cam3
+        print("camera1_pose: ", camera1_pose)
+        print("camera3_pose: ", camera3_pose)
 
-    print("T_base_camera3", res)
-    return res
+        res = camera1_pose * camera3_pose.inv()  # Camera-to-camera transformation
+        #res: T_cam1_cam3
+        robot_ref = env2.robots.get('robot1') or RealEnv._shared_robots.get('robot1')
+        if robot_ref is None:
+            raise RuntimeError("Unable to obtain shared robot instance for camera calibration.")
+        
+        robot_pose = robot_ref.get_pose_se3() #函数定义在record_episode.py中, 里面会调用dobot.get_pose()
+        # print("robot_pose: ", robot_pose)   
+
+        # if hasattr(robot_ref, "dobot"):
+        #     raw_pose = robot_ref.dobot.get_pose()
+        #     # print(
+        #     #     "robot pose raw (x,y,z,rx,ry,rz): "
+        #     #     f"{raw_pose[0]:.4f}, {raw_pose[1]:.4f}, {raw_pose[2]:.4f}, "
+        #     #     f"{raw_pose[3]:.4f}, {raw_pose[4]:.4f}, {raw_pose[5]:.4f}"
+        #     # )
+        #     rotation_list = [raw_pose[3],raw_pose[4], raw_pose[5]]
+        #     R_xyz = R.from_euler('xyz', rotation_list, degrees=True)
+        #     raw_pose_matrix = SE3.Rt(
+        #         SO3(R_xyz.as_matrix()),
+        #         [raw_pose[0]/1000, raw_pose[1]/1000, raw_pose[2]/1000], 
+        #         check=False
+        #     )
+        #     raw_pose_matrix_array = np.array(raw_pose_matrix)
+            # print("raw_pose_matrix_array", raw_pose_matrix_array)
+
+        # robot_pose: T_base_ee
+        # transformations: T_ee_cam1
+        # res: T_cam1_cam3
+        res = robot_pose * transformations * res
+        # 新res: T_base_cam3
+
+        print("T_base_camera3", res)
+
+        return res
 
 
 
@@ -401,7 +391,7 @@ def main():
                 break
             
             # 获取位置数据
-            positions = tracker.get_all_positions()
+            # positions = tracker.get_all_positions()
             # print("\rCurrent positions:", positions, end='')
             
     except KeyboardInterrupt:

@@ -2,7 +2,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 from my_utils.pose_util import Rt_to_pose,inverse_pose, pose_to_SE3
-from my_utils.camera_intrinsics import intrinsics
+from my_utils.camera_intrinsics import intrinsics_1, intrinsics_3
 
 # Dictionary of available ArUco dictionaries
 ARUCO_DICTS = {
@@ -24,9 +24,9 @@ ARUCO_DICTS = {
     'apriltag_36h11': cv2.aruco.DICT_APRILTAG_36h11
 }
 
-# Default dictionary
-ARUCO_DICT_NAME = ARUCO_DICTS['4x4_250']
-my_aruco_dict = cv2.aruco.getPredefinedDictionary(ARUCO_DICT_NAME)
+# # Default dictionary
+# ARUCO_DICT_NAME = ARUCO_DICTS['4x4_250']
+# my_aruco_dict = cv2.aruco.getPredefinedDictionary(ARUCO_DICT_NAME)
 
 def set_aruco_dict(dict_name):
     """
@@ -155,8 +155,17 @@ def get_cam_pose(frame, marker_size, intrinsics, aruco_dict=None):
         current_cam = inverse_pose(current_pose)
     return current_cam
 
-def get_marker_pose(frame, marker_size, id=0, draw=True, aruco_dict=None):
+def get_marker_pose(frame, marker_size, id=0, draw=True, aruco_dict=None, intrinsics_name=None):
     id = int(id)
+    # print("intrinsics_name", intrinsics_name)
+    if intrinsics_name == "intrinsics_1":
+        intrinsics = intrinsics_1
+    elif intrinsics_name == "intrinsics_3":
+        intrinsics = intrinsics_3
+    else:
+        raise ValueError("Invalid intrinsics")
+
+
     corners, ids = detect_aruco(frame, draw_flag=draw, aruco_dict=aruco_dict)
     if ids is not None and len(ids)>0:
         poses_dict = get_aruco_poses(corners=corners, ids=ids, intrinsics=intrinsics, frame=frame, marker_size=marker_size)
