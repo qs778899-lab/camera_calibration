@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
 import json
-from spatialmath import SE3
 from threading import Thread, Lock
 import time
 from queue import Queue
-
+from scipy.spatial.transform import Rotation as R
+from spatialmath import SE3, SO3
 from my_utils.robot_utils import robot_fk
 from record_episode import RealEnv
 from my_utils.aruco_util import get_marker_pose,set_aruco_dict
@@ -299,18 +299,24 @@ def auto_regist_camera(marker_id_input):
         raise RuntimeError("Unable to obtain shared robot instance for camera calibration.")
     
     robot_pose = robot_ref.get_pose_se3() #函数定义在record_episode.py中, 里面会调用dobot.get_pose()
-    translation = robot_pose.t            # [x, y, z]，单位米
-    rpy_rad = robot_pose.rpy(order='xyz') # [rx, ry, rz]，单位弧度
-    rpy_deg = np.degrees(rpy_rad)
-    print(
-        "robot pose: "
-        f"x={translation[0]:.4f} m, "
-        f"y={translation[1]:.4f} m, "
-        f"z={translation[2]:.4f} m, "
-        f"rx={rpy_deg[0]:.3f}°, "
-        f"ry={rpy_deg[1]:.3f}°, "
-        f"rz={rpy_deg[2]:.3f}°"
-    )
+    print("robot_pose: ", robot_pose)
+    #  -0.08182  -0.9276    0.3644    0.4868    
+    # -0.9966    0.07219  -0.03998  -0.3219    
+    # 0.01078  -0.3664   -0.9304    0.393     
+    # 0         0         0         1     
+     
+    # translation = robot_pose.t            # [x, y, z]，单位米
+    # rpy_rad = robot_pose.rpy(order='xyz') # [rx, ry, rz]，单位弧度
+    # rpy_deg = np.degrees(rpy_rad)
+    # print(
+    #     "robot pose: "
+    #     f"x={translation[0]:.4f} m, "
+    #     f"y={translation[1]:.4f} m, "
+    #     f"z={translation[2]:.4f} m, "
+    #     f"rx={rpy_deg[0]:.3f}°, "
+    #     f"ry={rpy_deg[1]:.3f}°, "
+    #     f"rz={rpy_deg[2]:.3f}°"
+    # )
     if hasattr(robot_ref, "dobot"):
         raw_pose = robot_ref.dobot.get_pose()
         print(
@@ -318,6 +324,20 @@ def auto_regist_camera(marker_id_input):
             f"{raw_pose[0]:.4f}, {raw_pose[1]:.4f}, {raw_pose[2]:.4f}, "
             f"{raw_pose[3]:.4f}, {raw_pose[4]:.4f}, {raw_pose[5]:.4f}"
         )
+        rotation_list = [raw_pose[3],raw_pose[4], raw_pose[5]]
+        R_xyz = R.from_euler('xyz', rotation_list, degrees=True)
+        raw_pose_matrix = SE3.Rt(
+            SO3(R_xyz.as_matrix()),
+            [raw_pose[0]/1000, raw_pose[1]/1000, raw_pose[2]/1000], 
+            check=False
+        )
+        raw_pose_matrix_array = np.array(raw_pose_matrix)
+        print("raw_pose_matrix_array", raw_pose_matrix_array)
+        # [[-0.08181547 -0.92764103  0.36440136  0.4867529 ]
+        # [-0.99658917  0.07219061 -0.03998184 -0.3218998 ]
+        # [ 0.01078244 -0.36642958 -0.93038331  0.3930265 ]
+        # [ 0.          0.          0.          1.        ]]
+
     # robot_pose: T_base_ee
     # transformations: T_ee_cam1
     # res: T_cam1_cam3
@@ -325,10 +345,6 @@ def auto_regist_camera(marker_id_input):
     # 新res: T_base_cam3
 
     print("T_base_camera3", res)
-        #   -0.08477   0.6161   -0.7831    0.7618    
-        #    0.9132   -0.2663   -0.3084   -0.4537    
-        #   -0.3985   -0.7413   -0.54      0.4132    
-        #    0         0         0         1    
     return res
 
 

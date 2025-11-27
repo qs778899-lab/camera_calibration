@@ -78,7 +78,8 @@ class DobotRobotWrapper:
             return SE3()
         x, y, z, rx, ry, rz = pose[:6]
         translation = np.array([x / 1000.0, y / 1000.0, z / 1000.0])
-        rotation = SO3.RPY(np.deg2rad([rx, ry, rz]))
+        # rotation = SO3.RPY(np.deg2rad([rx, ry, rz]))
+        rotation = SO3.RPY([rx, ry, rz], unit='deg', order='zyx')
         return SE3.Rt(rotation.R, translation)
 
     def get_joint_positions(self):
