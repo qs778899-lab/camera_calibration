@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import json
+import os
+import csv
+from datetime import datetime
 from threading import Thread, Lock
 import time
 from queue import Queue
@@ -276,15 +279,46 @@ def auto_regist_camera(marker_id_input):
     env1, position_map1 = setup_camera_env("camera1")
     env2, position_map2 = setup_camera_env("camera3")
 
-    # Collect and filter marker poses
-    for _ in range(1000):
-        for env, camera_name, position_map in [
-            (env1, "camera1", position_map1),
-            (env2, "camera3", position_map2)
-        ]:
-            marker_pose, _ = get_marker_detection(env, camera_name, marker_info) #这里面会调用get qpos
-            position_map.update_position(marker_id_input, marker_pose) #用卡尔曼滤波更新实际marker的position
-            position_map.combine_temp_map(marker_id_input)   #它确保每一轮都在收齐所有相机的观测之后，才更新“当前标记姿态”。这样既能兼顾多相机的数据，又避免用单个相机的残缺结果覆盖掉其他信息。
+    os.makedirs("records", exist_ok=True)
+    csv_filename = datetime.now().strftime("%Y%m%d_%H%M%S_camera_pose.csv")
+    csv_path = os.path.join("records", csv_filename)
+
+    def pose_to_str(pose):
+        if pose is None:
+            return ""
+        translation = pose.t
+        rpy = pose.rpy(order='xyz')
+        return (
+            f"[{translation[0]:.6f}, {translation[1]:.6f}, {translation[2]:.6f}, "
+            f"{rpy[0]:.6f}, {rpy[1]:.6f}, {rpy[2]:.6f}]"
+        )
+
+    with open(csv_path, "w", newline="") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow([
+            "iteration",
+            "camera1_pose",
+            "camera3_pose",
+        ])
+        camera_order = ["camera1", "camera3"]
+
+        # Collect and filter marker poses
+        for iteration in range(1000):
+            cam_results = {}
+            for env, camera_name, position_map in [
+                (env1, "camera1", position_map1),
+                (env2, "camera3", position_map2)
+            ]:
+                marker_pose, _ = get_marker_detection(env, camera_name, marker_info) #这里面会调用get qpos
+                position_map.update_position(marker_id_input, marker_pose) #用卡尔曼滤波更新实际marker的position
+                position_map.combine_temp_map(marker_id_input)   #它确保每一轮都在收齐所有相机的观测之后，才更新“当前标记姿态”。这样既能兼顾多相机的数据，又避免用单个相机的残缺结果覆盖掉其他信息。
+                cam_results[camera_name] = marker_pose
+
+            writer.writerow([
+                iteration,
+                pose_to_str(cam_results.get("camera1")),
+                pose_to_str(cam_results.get("camera3")),
+            ])
 
     # Calculate transformation
     camera1_pose = position_map1.position_map[marker_id_input]
