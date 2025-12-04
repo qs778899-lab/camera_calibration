@@ -335,6 +335,8 @@ def auto_regist_camera(marker_id_input):
         print("camera1_pose: ", camera1_pose)
         print("camera3_pose: ", camera3_pose)
 
+        
+
         res = camera1_pose * camera3_pose.inv()  # Camera-to-camera transformation
         #res: T_cam1_cam3
         robot_ref = env2.robots.get('robot1') or RealEnv._shared_robots.get('robot1')
@@ -375,6 +377,11 @@ def auto_regist_camera(marker_id_input):
             f"x={translation_res[0]:.4f}, y={translation_res[1]:.4f}, z={translation_res[2]:.4f}, "
             f"rx={rpy_res[0]:.4f}, ry={rpy_res[1]:.4f}, rz={rpy_res[2]:.4f}"
         )
+
+        T_base_cam3 = res
+        T_cam3_marker = camera3_pose
+        T_marker_001 = T_base_cam3 * T_cam3_marker 
+        print("T_marker_001: ", T_marker_001)
 
         
 
